@@ -85,16 +85,9 @@ int main()
 	// Create top of screen
 	PhysicsRectangle top;
 	top.setSize(Vector2f(1000, 10));
-	top.setCenter(Vector2f(400, -5));
+	top.setCenter(Vector2f(400, -25));
 	top.setStatic(true);
 	world.AddPhysicsBody(top);
-
-	// Create right wall 
-	PhysicsRectangle right;
-	right.setSize(Vector2f(10, 600));
-	right.setCenter(Vector2f(1005, 300));
-	right.setStatic(true);
-	world.AddPhysicsBody(right);
 
 	// Create the Ship
 	PhysicsSprite ship;
@@ -106,40 +99,14 @@ int main()
 	ship.setStatic(true);
 	world.AddPhysicsBody(ship);
 
-	// Create the laser
-	/*
-	PhysicsSprite laser;
 	Texture laserTex;
 	LoadTex(laserTex, "FinalProjectImages/laser.png");
-	laser.setTexture(laserTex);
-	bool drawingLaser = false;
-	*/
-	
+	PhysicsShapeList<PhysicsSprite> lasers;
 
 	// Create the asteroids
 	Texture asteroidTex;
 	LoadTex(asteroidTex, "FinalProjectImages/asteroid.jpg");
 	PhysicsShapeList<PhysicsSprite> asteroids;
-
-	laser.onCollision =
-		[&drawingLaser, &ship, &laser, &world, &asteroids]
-	(PhysicsBodyCollisionResult result)
-	{
-		if (result.object2 == ship)
-		{
-			cout << "hits ship";
-			drawingLaser = false;
-			world.RemovePhysicsBody(laser);
-		}
-		cout << "hits something?";
-	};
-
-	// Colission detections
-	top.onCollision = [&drawingLaser, &world, &laser](PhysicsBodyCollisionResult result)
-	{
-		drawingLaser = false;
-		world.RemovePhysicsBody(laser);
-	};
 
 	// loads font
 	Font fnt;
@@ -152,37 +119,65 @@ int main()
 	Clock clock;
 	Time lastTime(clock.getElapsedTime());
 	long interval = 0;
+	long laserInterval = 0;
 	while (health > 0)
 	{
 		// calculate MS since the last frame
 		Time currentTime(clock.getElapsedTime());
 		Time deltaTime(currentTime - lastTime);
 		int deltaTimeMS(deltaTime.asMilliseconds());
-		
 		if (deltaTimeMS > 10)
 		{
 			interval += deltaTimeMS;
+			laserInterval += deltaTimeMS;
 			world.UpdatePhysics(deltaTimeMS);
 			lastTime = currentTime;
 			MoveShip(ship, deltaTimeMS);
-			if (Keyboard::isKeyPressed(Keyboard::Space) && !(drawingLaser))
+			if (Keyboard::isKeyPressed(Keyboard::Space) && laserInterval >= 100)
 			{
-				drawingLaser = true;
+				PhysicsSprite& laser = lasers.Create();
+				laser.setTexture(laserTex);
 				laser.setCenter(Vector2f(GetShipCenter(ship).x, GetShipCenter(ship).y - 45));
 				laser.setVelocity(Vector2f(0, -1));
+
+				laser.onCollision =
+					[&ship, &lasers, &laser, &world, &asteroids, &health, &top, &bottom]
+				(PhysicsBodyCollisionResult result)
+				{
+					if (result.object2 == ship)
+					{
+						cout << "hits ship";
+						world.RemovePhysicsBody(laser);
+						lasers.QueueRemove(laser);
+						health -= 1;
+					}
+					else if (result.object2 == top) 
+					{
+						world.RemovePhysicsBody(laser);
+						lasers.QueueRemove(laser);
+					}
+					else if (result.object2 == bottom)
+					{
+						world.RemovePhysicsBody(laser);
+						lasers.QueueRemove(laser);
+					}
+					else
+					{
+						world.RemovePhysicsBody(laser);
+						lasers.QueueRemove(laser);
+					}
+				};
+
 				world.AddPhysicsBody(laser);
+				laserInterval = 0;
 			}
 		}
 		window.clear(Color(0, 0, 0));
 		// Laser delting iteself after a certain time if stuck
-		if (laser.getVelocity().y != -1)
+		lasers.DoRemovals();
+		for (PhysicsShape& laser : lasers)
 		{
-			drawingLaser = false;
-			world.RemovePhysicsBody(laser);
-		}
-		if (drawingLaser)
-		{
-			window.draw(laser);
+			window.draw((PhysicsSprite&)laser);
 		}
 		asteroids.DoRemovals();
 		for (PhysicsShape& asteroid : asteroids) {
@@ -197,29 +192,29 @@ int main()
 			asteroid.setVelocity(Vector2f(0, 0.25));
 			world.AddPhysicsBody(asteroid);
 			asteroid.onCollision =
-				[&drawingLaser, &world, &laser, &asteroid, &asteroids, &score, &bottom, &health, &ship]
+				[&world, &asteroid, &asteroids, &score, &bottom, &health, &ship]
 			(PhysicsBodyCollisionResult result)
 			{
-				if (result.object2 == laser)
-				{
-					//cout << "hits asteroid";
-					//drawingLaser = false;
-					world.RemovePhysicsBody(laser);
-					world.RemovePhysicsBody(asteroid);
-					asteroids.QueueRemove(asteroid);
-					score += 10;
-				}
+				
 				if (result.object2 == bottom)
 				{
 					world.RemovePhysicsBody(asteroid);
 					asteroids.QueueRemove(asteroid);
 					health -= 1;
 				}
-				if (result.object2 == ship)
+				else if (result.object2 == ship)
 				{
 					world.RemovePhysicsBody(asteroid);
 					asteroids.QueueRemove(asteroid);
 					health -= 1;
+				}
+				else 
+				{
+					//cout << "hits asteroid";
+					//drawingLaser = false;
+					world.RemovePhysicsBody(asteroid);
+					asteroids.QueueRemove(asteroid);
+					score += 10;
 				}
 			};
 			interval = 0;
@@ -243,7 +238,6 @@ int main()
 
 		window.draw(healthText);
 		window.draw(bottom);
-		window.draw(right);
 		window.draw(ship);
 		window.display();
 	}
