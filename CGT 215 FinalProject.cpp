@@ -82,12 +82,33 @@ int main()
 	bottom.setStatic(true);
 	world.AddPhysicsBody(bottom);
 
+	// So the enemy Ship bounces when reaching the bottom of the screen
+	PhysicsRectangle bottomBounce;
+	bottomBounce.setSize(Vector2f(60, 10));
+	bottomBounce.setCenter(Vector2f(975, 600));
+	bottomBounce.setStatic(true);
+	world.AddPhysicsBody(bottomBounce);
+
+
 	// Create top of screen
 	PhysicsRectangle top;
-	top.setSize(Vector2f(1000, 10));
+	top.setSize(Vector2f(1050, 10));
 	top.setCenter(Vector2f(400, -25));
 	top.setStatic(true);
 	world.AddPhysicsBody(top);
+	// So the enemy Ship bounces when reaching the top of the screen
+	PhysicsRectangle topBounce;
+	topBounce.setSize(Vector2f(60, 10));
+	topBounce.setCenter(Vector2f(975, 0));
+	topBounce.setStatic(true);
+	world.AddPhysicsBody(topBounce);
+
+	// Create left boundry
+	PhysicsRectangle left;
+	left.setSize(Vector2f(10, 600));
+	left.setCenter(Vector2f(-15, 300));
+	left.setStatic(true);
+	world.AddPhysicsBody(left);
 
 	// Create the Ship
 	PhysicsSprite ship;
@@ -99,9 +120,22 @@ int main()
 	ship.setStatic(true);
 	world.AddPhysicsBody(ship);
 
+	// Create enemy ship
+	PhysicsSprite enemyShip;
+	Texture enemyTex;
+	LoadTex(enemyTex, "FinalProjectImages/enemyShip.jpeg");
+	enemyShip.setTexture(enemyTex);
+	enemyShip.setCenter(Vector2f(975, 300));
+	enemyShip.setVelocity(Vector2f(0, .20));
+	//enemyShip.setStatic(true);
+	world.AddPhysicsBody(enemyShip);
+	//PhysicsShapeList<PhysicsSprite> enemyShips;
+
+	// Create lasers
 	Texture laserTex;
 	LoadTex(laserTex, "FinalProjectImages/laser.png");
 	PhysicsShapeList<PhysicsSprite> lasers;
+	PhysicsShapeList<PhysicsSprite> enemyLasers;
 
 	// Create the asteroids
 	Texture asteroidTex;
@@ -120,6 +154,8 @@ int main()
 	Time lastTime(clock.getElapsedTime());
 	long interval = 0;
 	long laserInterval = 0;
+	long enemyShoot = 0;
+	//bool enemyShipSpawn = false;
 	while (health > 0)
 	{
 		// calculate MS since the last frame
@@ -130,6 +166,8 @@ int main()
 		{
 			interval += deltaTimeMS;
 			laserInterval += deltaTimeMS;
+			enemyShoot += deltaTimeMS;
+
 			world.UpdatePhysics(deltaTimeMS);
 			lastTime = currentTime;
 			MoveShip(ship, deltaTimeMS);
@@ -171,6 +209,41 @@ int main()
 				world.AddPhysicsBody(laser);
 				laserInterval = 0;
 			}
+
+			
+		}
+		//enemy shooting
+		if (enemyShoot >= 1500)
+		{
+			enemyShoot = 0;
+			PhysicsSprite& enemyLaser = enemyLasers.Create();
+			enemyLaser.setTexture(laserTex);
+			Vector2f sz = enemyLaser.getSize();
+			enemyLaser.setCenter(Vector2f(GetShipCenter(enemyShip).x - 100, GetShipCenter(enemyShip).y));
+			enemyLaser.setVelocity(Vector2f(-0.75, 0));
+			world.AddPhysicsBody(enemyLaser);
+			enemyLaser.onCollision =
+				[&ship, &enemyLasers, &enemyLaser, &world, &asteroids, &health, &top, &left]
+			(PhysicsBodyCollisionResult result)
+			{
+				if (result.object2 == ship)
+				{
+					cout << "hits ship";
+					world.RemovePhysicsBody(enemyLaser);
+					enemyLasers.QueueRemove(enemyLaser);
+					health -= 1;
+				}
+				else if (result.object2 == left)
+				{
+					world.RemovePhysicsBody(enemyLaser);
+					enemyLasers.QueueRemove(enemyLaser);
+				}
+				else
+				{
+					world.RemovePhysicsBody(enemyLaser);
+					enemyLasers.QueueRemove(enemyLaser);
+				}
+			};
 		}
 		window.clear(Color(0, 0, 0));
 		// Laser delting iteself after a certain time if stuck
@@ -183,12 +256,24 @@ int main()
 		for (PhysicsShape& asteroid : asteroids) {
 			window.draw((PhysicsSprite&)asteroid);
 		}
+		enemyLasers.DoRemovals();
+		for (PhysicsShape& enemyLaser : enemyLasers)
+		{
+			window.draw((PhysicsSprite&)enemyLaser);
+		}
+		/*
+		enemyShips.DoRemovals();
+		for (PhysicsShape& enemyShip : enemyShips) {
+			window.draw((PhysicsSprite&)enemyShip);
+		}
+		*/
+		// Spawn and destroy Asteroids
 		if (interval >= 1000)
 		{
 			PhysicsSprite& asteroid = asteroids.Create();
 			asteroid.setTexture(asteroidTex);
 			Vector2f sz = asteroid.getSize();
-			asteroid.setCenter(Vector2f(rand() % 1000, 50));
+			asteroid.setCenter(Vector2f(rand() % 900, 50));
 			asteroid.setVelocity(Vector2f(0, 0.25));
 			world.AddPhysicsBody(asteroid);
 			asteroid.onCollision =
@@ -221,9 +306,35 @@ int main()
 			
 		}
 
-		
-		
-
+		// Spawn and destroy enemy ships
+		/*
+		if (enemySpawn == 5000 && enemyShipSpawn == false)
+		{
+			PhysicsSprite& enemyShip = enemyShips.Create();
+			enemyShip.setTexture(enemyTex);
+			enemyShip.setCenter(Vector2f(950, rand() % 600));
+			world.AddPhysicsBody(enemyShip);
+			enemyShipSpawn == true;
+			enemyShip.onCollision =
+				[&world, &enemyShip, &enemyShips, &score, &bottom, &health, &enemyShipSpawn]
+			(PhysicsBodyCollisionResult result)
+			{
+				if (result.object2 == bottom)
+				{
+					world.RemovePhysicsBody(enemyShip);
+					enemyShips.QueueRemove(enemyShip);
+					enemyShipSpawn == false;
+				}
+				else
+				{
+					world.RemovePhysicsBody(enemyShip);
+					enemyShips.QueueRemove(enemyShip);
+					enemyShipSpawn == false;
+				}
+			};
+			enemySpawn = 0;
+		}
+		*/
 		//text display
 		Text scoreText;
 		scoreText.setString(to_string(score));
@@ -238,7 +349,10 @@ int main()
 
 		window.draw(healthText);
 		window.draw(bottom);
+		window.draw(top);
+		window.draw(left);
 		window.draw(ship);
+		window.draw(enemyShip);
 		window.display();
 	}
 	return 0;
