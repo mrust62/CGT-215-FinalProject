@@ -127,9 +127,9 @@ int main()
 	enemyShip.setTexture(enemyTex);
 	enemyShip.setCenter(Vector2f(975, 300));
 	enemyShip.setVelocity(Vector2f(0, .20));
-	//enemyShip.setStatic(true);
+	
 	world.AddPhysicsBody(enemyShip);
-	//PhysicsShapeList<PhysicsSprite> enemyShips;
+	
 
 	// Create lasers
 	Texture laserTex;
@@ -261,12 +261,7 @@ int main()
 		{
 			window.draw((PhysicsSprite&)enemyLaser);
 		}
-		/*
-		enemyShips.DoRemovals();
-		for (PhysicsShape& enemyShip : enemyShips) {
-			window.draw((PhysicsSprite&)enemyShip);
-		}
-		*/
+		
 		// Spawn and destroy Asteroids
 		if (interval >= 1000)
 		{
@@ -306,35 +301,6 @@ int main()
 			
 		}
 
-		// Spawn and destroy enemy ships
-		/*
-		if (enemySpawn == 5000 && enemyShipSpawn == false)
-		{
-			PhysicsSprite& enemyShip = enemyShips.Create();
-			enemyShip.setTexture(enemyTex);
-			enemyShip.setCenter(Vector2f(950, rand() % 600));
-			world.AddPhysicsBody(enemyShip);
-			enemyShipSpawn == true;
-			enemyShip.onCollision =
-				[&world, &enemyShip, &enemyShips, &score, &bottom, &health, &enemyShipSpawn]
-			(PhysicsBodyCollisionResult result)
-			{
-				if (result.object2 == bottom)
-				{
-					world.RemovePhysicsBody(enemyShip);
-					enemyShips.QueueRemove(enemyShip);
-					enemyShipSpawn == false;
-				}
-				else
-				{
-					world.RemovePhysicsBody(enemyShip);
-					enemyShips.QueueRemove(enemyShip);
-					enemyShipSpawn == false;
-				}
-			};
-			enemySpawn = 0;
-		}
-		*/
 		//text display
 		Text scoreText;
 		scoreText.setString(to_string(score));
@@ -355,7 +321,22 @@ int main()
 		window.draw(enemyShip);
 		window.display();
 	}
-	return 0;
+	window.display(); // this is needed to see the last frame
+	Text gameOverText;
+	gameOverText.setString("GAME OVER");
+	gameOverText.setFont(fnt);
+	sz = GetTextSize(gameOverText);
+	gameOverText.setPosition(500 - (sz.x / 2), 300 - (sz.y / 2));
+	window.draw(gameOverText);
+	window.display();
+	while (true)
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Space))
+		{
+			exit(4);
+		}
+	}
+	//return 0;
 }
 
 
