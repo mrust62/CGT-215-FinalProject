@@ -155,7 +155,6 @@ int main()
 	long interval = 0;
 	long laserInterval = 0;
 	long enemyShoot = 0;
-	//bool enemyShipSpawn = false;
 	while (health > 0)
 	{
 		// calculate MS since the last frame
@@ -336,7 +335,6 @@ int main()
 			exit(4);
 		}
 	}
-	//return 0;
 }
 
 
