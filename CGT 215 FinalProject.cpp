@@ -70,43 +70,30 @@ int main()
 {
 	int score = 0;
 	int health = 3;
-
+	const int screenX = 1000;
+	const int screenY = 600;
 	//Create the window
-	RenderWindow window(VideoMode(1000, 600), "Space Shooter");
+	RenderWindow window(VideoMode(screenX, screenY), "Space Shooter");
 	World world(Vector2f(0, 0));
 
 	// Create bottom of screen
 	PhysicsRectangle bottom;
-	bottom.setSize(Vector2f(1000, 10));
-	bottom.setCenter(Vector2f(400, 605));
+	bottom.setSize(Vector2f(screenX, 10));
+	bottom.setCenter(Vector2f((screenX / 2), (screenY + 5)));
 	bottom.setStatic(true);
 	world.AddPhysicsBody(bottom);
 
-	// So the enemy Ship bounces when reaching the bottom of the screen
-	PhysicsRectangle bottomBounce;
-	bottomBounce.setSize(Vector2f(60, 10));
-	bottomBounce.setCenter(Vector2f(975, 600));
-	bottomBounce.setStatic(true);
-	world.AddPhysicsBody(bottomBounce);
-
-
 	// Create top of screen
 	PhysicsRectangle top;
-	top.setSize(Vector2f(1050, 10));
-	top.setCenter(Vector2f(400, -25));
-	top.setStatic(true);
+	top.setSize(Vector2f(screenX , 10));
+	top.setCenter(Vector2f((screenX / 2), -25));
+	top.setStatic(true); 
 	world.AddPhysicsBody(top);
-	// So the enemy Ship bounces when reaching the top of the screen
-	PhysicsRectangle topBounce;
-	topBounce.setSize(Vector2f(60, 10));
-	topBounce.setCenter(Vector2f(975, 0));
-	topBounce.setStatic(true);
-	world.AddPhysicsBody(topBounce);
 
 	// Create left boundry
 	PhysicsRectangle left;
-	left.setSize(Vector2f(10, 600));
-	left.setCenter(Vector2f(-15, 300));
+	left.setSize(Vector2f(10, screenY));
+	left.setCenter(Vector2f(-15, (screenY / 2)));
 	left.setStatic(true);
 	world.AddPhysicsBody(left);
 
@@ -116,7 +103,7 @@ int main()
 	LoadTex(shipTex, "FinalProjectImages/spaceship.jpg");
 	ship.setTexture(shipTex);
 	Vector2f sz = ship.getSize();
-	ship.setCenter(Vector2f(400, 600 - sz.y / 2));
+	ship.setCenter(Vector2f((screenX / 2), screenY - sz.y / 2));
 	ship.setStatic(true);
 	world.AddPhysicsBody(ship);
 
@@ -125,7 +112,7 @@ int main()
 	Texture enemyTex;
 	LoadTex(enemyTex, "FinalProjectImages/enemyShip.jpeg");
 	enemyShip.setTexture(enemyTex);
-	enemyShip.setCenter(Vector2f(975, 300));
+	enemyShip.setCenter(Vector2f((screenX - 25), (screenY / 2)));
 	enemyShip.setVelocity(Vector2f(0, .20));
 	
 	world.AddPhysicsBody(enemyShip);
@@ -183,7 +170,7 @@ int main()
 				{
 					if (result.object2 == ship)
 					{
-						cout << "hits ship";
+						//cout << "hits ship";
 						world.RemovePhysicsBody(laser);
 						lasers.QueueRemove(laser);
 						health -= 1;
@@ -227,7 +214,7 @@ int main()
 			{
 				if (result.object2 == ship)
 				{
-					cout << "hits ship";
+					//cout << "hits ship";
 					world.RemovePhysicsBody(enemyLaser);
 					enemyLasers.QueueRemove(enemyLaser);
 					health -= 1;
@@ -247,7 +234,7 @@ int main()
 		window.clear(Color(0, 0, 0));
 		// Laser delting iteself after a certain time if stuck
 		lasers.DoRemovals();
-		for (PhysicsShape& laser : lasers)
+		for (const auto& laser : lasers)
 		{
 			window.draw((PhysicsSprite&)laser);
 		}
@@ -267,7 +254,7 @@ int main()
 			PhysicsSprite& asteroid = asteroids.Create();
 			asteroid.setTexture(asteroidTex);
 			Vector2f sz = asteroid.getSize();
-			asteroid.setCenter(Vector2f(rand() % 900, 50));
+			asteroid.setCenter(Vector2f(rand() % (screenX - 100), 50));
 			asteroid.setVelocity(Vector2f(0, 0.25));
 			world.AddPhysicsBody(asteroid);
 			asteroid.onCollision =
@@ -304,12 +291,12 @@ int main()
 		Text scoreText;
 		scoreText.setString(to_string(score));
 		scoreText.setFont(fnt);
-		scoreText.setPosition(Vector2f(985 - GetTextSize(scoreText).x, 550));
+		scoreText.setPosition(Vector2f(985 - GetTextSize(scoreText).x, (screenY - 50)));
 		window.draw(scoreText);
 		Text healthText;
 		healthText.setString("health " + to_string(health));
 		healthText.setFont(fnt);
-		healthText.setPosition(Vector2f(-50 + GetTextSize(healthText).x, 550));
+		healthText.setPosition(Vector2f(-50 + GetTextSize(healthText).x, (screenY - 50)));
 
 
 		window.draw(healthText);
@@ -325,12 +312,12 @@ int main()
 	gameOverText.setString("GAME OVER");
 	gameOverText.setFont(fnt);
 	sz = GetTextSize(gameOverText);
-	gameOverText.setPosition(500 - (sz.x / 2), 300 - (sz.y / 2));
+	gameOverText.setPosition((screenX / 2) - (sz.x / 2), (screenY / 2) - (sz.y / 2));
 	window.draw(gameOverText);
 	window.display();
 	while (true)
 	{
-		if (Keyboard::isKeyPressed(Keyboard::Space))
+		if (Keyboard::isKeyPressed(Keyboard::Enter))
 		{
 			exit(4);
 		}
