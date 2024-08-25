@@ -12,7 +12,6 @@ using namespace std;
 using namespace sf;
 using namespace sfp;
 
-//load textures
 void LoadTex(Texture& tex, string filename)
 {
 	if (!tex.loadFromFile(filename))
@@ -21,7 +20,6 @@ void LoadTex(Texture& tex, string filename)
 	}
 }
 
-// moves the ship
 void MoveShip(PhysicsSprite& crossbow, int elapsedMS)
 {
 	if (Keyboard::isKeyPressed(Keyboard::Right))
@@ -170,7 +168,6 @@ int main()
 				{
 					if (result.object2 == ship)
 					{
-						//cout << "hits ship";
 						world.RemovePhysicsBody(laser);
 						lasers.QueueRemove(laser);
 						health -= 1;
@@ -214,7 +211,6 @@ int main()
 			{
 				if (result.object2 == ship)
 				{
-					//cout << "hits ship";
 					world.RemovePhysicsBody(enemyLaser);
 					enemyLasers.QueueRemove(enemyLaser);
 					health -= 1;
@@ -232,7 +228,7 @@ int main()
 			};
 		}
 		window.clear(Color(0, 0, 0));
-		// Laser delting iteself after a certain time if stuck
+		// Laser deleting iteself after a certain time if stuck
 		lasers.DoRemovals();
 		for (const auto& laser : lasers)
 		{
@@ -276,8 +272,6 @@ int main()
 				}
 				else 
 				{
-					//cout << "hits asteroid";
-					//drawingLaser = false;
 					world.RemovePhysicsBody(asteroid);
 					asteroids.QueueRemove(asteroid);
 					score += 10;
